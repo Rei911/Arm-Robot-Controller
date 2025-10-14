@@ -1,0 +1,212 @@
+﻿<Window x:Class="P1_PRNO.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Sudut" Height="614" Width="800">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <Grid Margin="10">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Servo 0 -->
+        <GroupBox Header="Servo 0" Grid.Row="0" Grid.Column="0" Margin="5">
+            <StackPanel>
+                <Slider x:Name="sliderServo0" Minimum="0" Maximum="180" Value="90"
+                Tag="0"
+                ValueChanged="SliderControl_ValueChanged"/>
+                <StackPanel Orientation="Horizontal" Margin="0,5">
+                    <Label Content="Sudut" Width="50"/>
+                    <TextBox x:Name="txtSudut0" Width="50" Text="90"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,2">
+                    <Label Content="Min" Width="50"/>
+                    <TextBox Width="60" Text="620"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,2">
+                    <Label Content="Maks" Width="50"/>
+                    <TextBox Width="60" Text="2430"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,2">
+                    <Label Content="Interpolasi" Width="70"/>
+                    <TextBox x:Name="txtInterp0" Width="60" Text="1570"/>
+                </StackPanel>
+            </StackPanel>
+        </GroupBox>
+
+        <!-- Servo 2 -->
+        <GroupBox Header="Servo 2" Grid.Row="0" Grid.Column="1" Margin="5">
+            <StackPanel>
+                <Slider x:Name="sliderServo2" Minimum="-90" Maximum="90" Value="0"
+                Tag="2"
+                ValueChanged="SliderControl_ValueChanged"/>
+                <StackPanel Orientation="Horizontal" Margin="0,5">
+                    <Label Content="Sudut" Width="50"/>
+                    <TextBox x:Name="txtSudut2" Width="50" Text="0"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,2">
+                    <Label Content="Min" Width="50"/>
+                    <TextBox Width="60" Text="660"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,2">
+                    <Label Content="Maks" Width="50"/>
+                    <TextBox Width="60" Text="2450"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,2">
+                    <Label Content="Interpolasi" Width="70"/>
+                    <TextBox x:Name="txtInterp2" Width="60" Text="1483"/>
+                </StackPanel>
+            </StackPanel>
+        </GroupBox>
+
+        <!-- Servo 3 -->
+        <GroupBox Header="Servo 3" Grid.Row="0" Grid.Column="2" Margin="5">
+            <StackPanel>
+                <Slider x:Name="sliderServo3" Minimum="-90" Maximum="90" Value="0"
+                Tag="3"
+                ValueChanged="SliderControl_ValueChanged"/>
+                <StackPanel Orientation="Horizontal" Margin="0,5">
+                    <Label Content="Sudut" Width="50"/>
+                    <TextBox x:Name="txtSudut3" Width="50" Text="0"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,2">
+                    <Label Content="Min" Width="50"/>
+                    <TextBox Width="60" Text="650"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,2">
+                    <Label Content="Maks" Width="50"/>
+                    <TextBox Width="60" Text="2428"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,2">
+                    <Label Content="Interpolasi" Width="70"/>
+                    <TextBox x:Name="txtInterp3" Width="60" Text="1550"/>
+                </StackPanel>
+            </StackPanel>
+        </GroupBox>
+
+
+        <!-- Jepit -->
+        <GroupBox Header="Jepit" Grid.Row="1" Grid.Column="2" Margin="5">
+            <StackPanel>
+                <Slider Minimum="0" Maximum="200" Value="140"/>
+                <StackPanel Orientation="Horizontal" Margin="0,5">
+                    <Label Content="mm" Width="50"/>
+                    <TextBox Width="50" Text="140"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,2">
+                    <Label Content="Min" Width="50"/>
+                    <TextBox Width="60" Text="2122"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,2">
+                    <Label Content="Maks" Width="50"/>
+                    <TextBox Width="60" Text="1044"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,2">
+                    <Label Content="Interpolasi" Width="70"/>
+                    <TextBox Width="60" Text="1583"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,5">
+                    <Button x:Name="BtnClaw_Open" Content="Open Claw" Width="100" Click="BtnClaw_Open_Click"/>
+                    <Button x:Name="BtnClaw_Close" Content="Close Claw" Width="100" Margin="5,0,0,0" Click="BtnClaw_Close_Click"/>
+                </StackPanel>
+            </StackPanel>
+        </GroupBox>
+
+        <!-- COM PORT -->
+        <StackPanel Grid.Row="1" Grid.Column="0" Margin="5">
+            <StackPanel Orientation="Horizontal">
+                <Label Content="COM PORT" Width="80"/>
+                <ComboBox x:Name="cmbPorts" Width="100"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="0,5">
+                <Button x:Name="btnConnect" Content="Connect" Width="100" Click="BtnConnect_Click"/>
+                <Button Content="Close Port" Width="100" Margin="5,0,0,0" Click="BtnClose_Click"/>
+            </StackPanel>
+            <Button x:Name="btnOrigin" Content="Origin Position" Height="40" Width="200" Margin="0,5" Click="BtnOrigin_Click"/>
+
+        </StackPanel>
+
+        <!-- Robot Parameter & Kinematic -->
+        <GroupBox Header="Robot Parameter" Grid.Row="1" Grid.Column="1" Margin="5">
+            <StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,2">
+                    <Label Content="a1" Width="40"/>
+                    <TextBox x:Name="m_a1" Width="50" Text="0"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,2">
+                    <Label Content="a2" Width="40"/>
+                    <TextBox x:Name="m_a2" Width="50" Text="0"/>
+                </StackPanel>
+
+                <Label Content="Forward Kinematic Result" FontWeight="Bold" Margin="0,10,0,2"/>
+                <StackPanel Orientation="Horizontal" Margin="0,2">
+                    <Label Content="Px" Width="40"/>
+                    <TextBox x:Name="m_px" Width="80" Text="0.0" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,2">
+                    <Label Content="Py" Width="40"/>
+                    <TextBox x:Name="m_py" Width="80" Text="0.0" />
+                </StackPanel>
+            </StackPanel>
+        </GroupBox>
+
+
+        <!-- Inverse Kinematic -->
+        <GroupBox Header="Inverse Kinematic" Grid.Row="2" Grid.ColumnSpan="3" Margin="5">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Solusi 1 -->
+                <StackPanel Grid.Column="0" Margin="5">
+                    <Label Content="Solusi 1" FontWeight="Bold"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,2">
+                        <Label Content="Teta 1" Width="50"/>
+                        <TextBox x:Name="m_satu" Width="60" Text="0"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,2">
+                        <Label Content="Teta 2" Width="50"/>
+                        <TextBox x:Name="m_dua" Width="60" Text="0"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,5">
+                        <Button x:Name="cal_inv1" Content="Calculate" Width="80" Click="cal_inv1_Click" />
+                        <Button x:Name="run_inv1" Content="Run" Width="80" Margin="5,0,0,0" Click="run_inv1_Click" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Solusi 2 -->
+                <StackPanel Grid.Column="1" Margin="5">
+                    <Label Content="Solusi 2" FontWeight="Bold"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,2">
+                        <Label Content="Teta 1" Width="50"/>
+                        <TextBox x:Name="m_satu1" Width="60" Text="0"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,2">
+                        <Label Content="Teta 2" Width="50"/>
+                        <TextBox x:Name="m_dua2" Width="60" Text="0"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,5">
+                            <Button x:Name="cal_inv2" Content="Calculate" Width="80" Click="cal_inv2_Click"/>
+                            <Button x:Name="run_inv2" Content="Run" Width="80" Margin="5,0,0,0" Click="run_inv2_Click"/>
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+        </GroupBox>
+
+        <!-- Exit Cancel -->
+        <StackPanel Orientation="Horizontal" Grid.Row="3" Grid.ColumnSpan="3" HorizontalAlignment="Right" Margin="5">
+            <Button Content="Exit" Width="80" Margin="5"/>
+            <Button Content="Cancel" Width="80" Margin="5"/>
+        </StackPanel>
+    </Grid>
+    </ScrollViewer>
+</Window>

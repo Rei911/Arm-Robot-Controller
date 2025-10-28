@@ -1,9 +1,11 @@
-﻿<Window x:Class="Trajectory.MainWindow"
+<Window x:Class="Trajectory.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
         Title="Trajectory" Height="820" Width="1000"
         WindowStartupLocation="CenterScreen"
         Background="#f5f5f5">
+
 
     <Grid Margin="10">
         <Grid.ColumnDefinitions>
@@ -22,12 +24,123 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- GRAFIK -->
+        <!-- GRAFIK DENGAN LIVECHARTS -->
         <Border Grid.Column="0" Grid.Row="0" 
                 BorderBrush="Gray" BorderThickness="1" CornerRadius="4" Padding="5"
                 HorizontalAlignment="Left" VerticalAlignment="Top"
                 ClipToBounds="True" Margin="0,0,10,5">
-            <Canvas x:Name="plotCanvas" Background="White" Width="700" Height="335" Loaded="PlotCanvas_Loaded"/>
+            <lvc:CartesianChart x:Name="robotChart" 
+                               Width="700" Height="335"
+                               Background="White"
+                               Hoverable="True"
+                               Zoom="Xy"
+                               Pan="Xy"
+                               DisableAnimations="False"
+                               AnimationsSpeed="0:0:0.5"
+                               DataTooltip="{x:Null}">
+
+                <lvc:CartesianChart.Series>
+                    <!-- Trajectory Path -->
+                    <lvc:LineSeries x:Name="trajectorySeries"
+                                   Title="Trajectory"
+                                   Values="{Binding TrajectoryPoints}"
+                                   Stroke="OrangeRed"
+                                   StrokeThickness="2"
+                                   Fill="Transparent"
+                                   PointGeometry="{x:Null}"
+                                   LineSmoothness="0"/>
+
+                    <!-- Robot Arm Links -->
+                    <lvc:LineSeries x:Name="link1Series"
+                                   Title="Link 1"
+                                   Values="{Binding Link1Points}"
+                                   Stroke="Black"
+                                   StrokeThickness="3"
+                                   Fill="Transparent"
+                                   PointGeometry="{x:Null}"/>
+
+                    <lvc:LineSeries x:Name="link2Series"
+                                   Title="Link 2"
+                                   Values="{Binding Link2Points}"
+                                   Stroke="DarkBlue"
+                                   StrokeThickness="3"
+                                   Fill="Transparent"
+                                   PointGeometry="{x:Null}"/>
+
+                    <lvc:LineSeries x:Name="link3Series"
+                                   Title="Link 3"
+                                   Values="{Binding Link3Points}"
+                                   Stroke="Red"
+                                   StrokeThickness="3"
+                                   Fill="Transparent"
+                                   PointGeometry="{x:Null}"/>
+
+                    <!-- Joint Points -->
+                    <lvc:ScatterSeries x:Name="baseSeries"
+                                      Title="Base"
+                                      Values="{Binding BasePoint}"
+                                      Stroke="Black"
+                                      StrokeThickness="2"
+                                      Fill="Gray"
+                                      PointGeometry="{x:Static lvc:DefaultGeometries.Circle}"
+
+                                      MaxPointShapeDiameter="10"
+                                      MinPointShapeDiameter="10"/>
+
+                    <lvc:ScatterSeries x:Name="elbowSeries"
+                                      Title="Elbow" 
+                                      Values="{Binding ElbowPoint}"
+                                      Stroke="DarkBlue"
+                                      StrokeThickness="2"
+                                      Fill="LightBlue"
+                                      PointGeometry="{x:Static lvc:DefaultGeometries.Circle}"
+
+                                      MaxPointShapeDiameter="8"
+                                      MinPointShapeDiameter="8"/>
+
+                    <lvc:ScatterSeries x:Name="wristSeries"
+                                      Title="Wrist"
+                                      Values="{Binding WristPoint}"
+                                      Stroke="DarkRed"
+                                      StrokeThickness="2"
+                                      Fill="LightCoral"
+                                      PointGeometry="{x:Static lvc:DefaultGeometries.Circle}"
+
+                                      MaxPointShapeDiameter="8"
+                                      MinPointShapeDiameter="8"/>
+
+                    <lvc:ScatterSeries x:Name="endEffectorSeries"
+                                      Title="End Effector"
+                                      Values="{Binding EndEffectorPoint}"
+                                      Stroke="Red"
+                                      StrokeThickness="2"
+                                      Fill="Red"
+                                      PointGeometry="{x:Static lvc:DefaultGeometries.Circle}"
+
+                                      MaxPointShapeDiameter="12"
+                                      MinPointShapeDiameter="12"/>
+                </lvc:CartesianChart.Series>
+
+                <lvc:CartesianChart.AxisX>
+                    <lvc:Axis Title="X (mm)" 
+                             LabelFormatter="{Binding XFormatter}"
+                             MinValue="-350" MaxValue="350">
+                        <lvc:Axis.Separator>
+                            <lvc:Separator Step="50" StrokeThickness="1"/>
+                        </lvc:Axis.Separator>
+                    </lvc:Axis>
+                </lvc:CartesianChart.AxisX>
+
+                <lvc:CartesianChart.AxisY>
+                    <lvc:Axis Title="Y (mm)"
+                             LabelFormatter="{Binding YFormatter}"
+                             MinValue="0" MaxValue="350">
+                        <lvc:Axis.Separator>
+                            <lvc:Separator Step="50" StrokeThickness="1"/>
+                        </lvc:Axis.Separator>
+                    </lvc:Axis>
+                </lvc:CartesianChart.AxisY>
+            </lvc:CartesianChart>
         </Border>
 
         <!-- PANEL KANAN -->

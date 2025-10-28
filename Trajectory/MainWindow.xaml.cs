@@ -1,16 +1,176 @@
-﻿using System;
+using LiveCharts;
+using LiveCharts.Defaults;
+using LiveCharts.Wpf;
+using System;
+using System.ComponentModel;
+using System.IO.Ports;
+using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using System.Windows.Threading;
-using System.IO.Ports;
-using System.Threading.Tasks;
 
 namespace Trajectory
 {
     public partial class MainWindow : Window
     {
+        public ChartValues<ObservablePoint> TrajectoryPoints { get => trajectoryPoints; }
+        public ChartValues<ObservablePoint> Link1Points { get => link1Points; }
+        public ChartValues<ObservablePoint> Link2Points { get => link2Points; }
+        public ChartValues<ObservablePoint> Link3Points { get => link3Points; }
+        public ChartValues<ObservablePoint> BasePoint { get => basePoint; }
+        public ChartValues<ObservablePoint> ElbowPoint { get => elbowPoint; }
+        public ChartValues<ObservablePoint> WristPoint { get => wristPoint; }
+        public ChartValues<ObservablePoint> EndEffectorPoint { get => endEffectorPoint; }
+
+        public SeriesCollection RobotSeries
+        {
+            get { return robotSeries; }
+            set
+            {
+                robotSeries = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public Func<double, string> XFormatter { get; set; }
+        public Func<double, string> YFormatter { get; set; }
+
+        // Variabel LiveCharts
+        private SeriesCollection robotSeries;
+        private ChartValues<ObservablePoint> trajectoryPoints;
+        private ChartValues<ObservablePoint> link1Points, link2Points, link3Points;
+        private ChartValues<ObservablePoint> basePoint, elbowPoint, wristPoint, endEffectorPoint;
+
+
+
+        private void InitializeChart()
+        {
+            trajectoryPoints = new ChartValues<ObservablePoint>();
+            link1Points = new ChartValues<ObservablePoint>();
+            link2Points = new ChartValues<ObservablePoint>();
+            link3Points = new ChartValues<ObservablePoint>();
+            basePoint = new ChartValues<ObservablePoint>();
+            elbowPoint = new ChartValues<ObservablePoint>();
+            wristPoint = new ChartValues<ObservablePoint>();
+            endEffectorPoint = new ChartValues<ObservablePoint>();
+
+            RobotSeries = new SeriesCollection
+    {
+        new LineSeries
+        {
+            Title = "Link 1",
+            Values = link1Points,
+            Stroke = Brushes.Blue,
+            Fill = Brushes.Transparent,
+            PointGeometry = null,
+            StrokeThickness = 2
+        },
+        new LineSeries
+        {
+            Title = "Link 2",
+            Values = link2Points,
+            Stroke = Brushes.Green,
+            Fill = Brushes.Transparent,
+            PointGeometry = null,
+            StrokeThickness = 2
+        },
+        new LineSeries
+        {
+            Title = "Link 3",
+            Values = link3Points,
+            Stroke = Brushes.Red,
+            Fill = Brushes.Transparent,
+            PointGeometry = null,
+            StrokeThickness = 2
+        },
+        new LineSeries
+        {
+            Title = "Trajectory",
+            Values = trajectoryPoints,
+            Stroke = Brushes.OrangeRed,
+            Fill = Brushes.Transparent,
+            PointGeometry = null,
+            StrokeThickness = 1.5
+        },
+        new ScatterSeries
+        {
+            Title = "End-Effector",
+            Values = endEffectorPoint,
+            Fill = Brushes.Red,
+            MinPointShapeDiameter = 6,
+            MaxPointShapeDiameter = 6
+        }
+    };
+
+            XFormatter = val => val.ToString("0");
+            YFormatter = val => val.ToString("0");
+
+            DataContext = this;
+        }
+
+
+        private void UpdateRobotChart(double sdt1, double sdt2, double sdt3)
+        {
+            // Hapus data link sebelumnya (tapi jangan hapus lintasan)
+            link1Points.Clear();
+            link2Points.Clear();
+            link3Points.Clear();
+            basePoint.Clear();
+            elbowPoint.Clear();
+            wristPoint.Clear();
+            endEffectorPoint.Clear();
+
+            // Hitung posisi joint
+            double r1 = sdt1 * Math.PI / 180.0;
+            double r2 = sdt2 * Math.PI / 180.0;
+            double r3 = sdt3 * Math.PI / 180.0;
+
+            double kx = a1 * Math.Cos(r1);
+            double ky = a1 * Math.Sin(r1);
+
+            double px = kx + a2 * Math.Cos(r1 + r2);
+            double py = ky + a2 * Math.Sin(r1 + r2);
+
+            double qx = px + a3 * Math.Cos(r1 + r2 + r3);
+            double qy = py + a3 * Math.Sin(r1 + r2 + r3);
+
+            // Tambahkan titik tiap joint
+            link1Points.Add(new ObservablePoint(0, 0));
+            link1Points.Add(new ObservablePoint(kx, ky));
+
+            link2Points.Add(new ObservablePoint(kx, ky));
+            link2Points.Add(new ObservablePoint(px, py));
+
+            link3Points.Add(new ObservablePoint(px, py));
+            link3Points.Add(new ObservablePoint(qx, qy));
+
+            basePoint.Add(new ObservablePoint(0, 0));
+            elbowPoint.Add(new ObservablePoint(kx, ky));
+            wristPoint.Add(new ObservablePoint(px, py));
+            endEffectorPoint.Add(new ObservablePoint(qx, qy));
+
+            // Tambahkan ke trajectory (jejak lintasan end-effector)
+            trajectoryPoints.Add(new ObservablePoint(qx, qy));
+
+            robotChart.Update(true, true);  // force redraw
+        }
+
+
+
+
+
+
+
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
         // ======================
         // Variabel utama trajectory
         // ======================
@@ -44,6 +204,7 @@ namespace Trajectory
         public MainWindow()
         {
             InitializeComponent();
+            InitializeChart();
 
             // Timer untuk animasi trajectory
             timer = new DispatcherTimer();
@@ -51,6 +212,7 @@ namespace Trajectory
 
             // Inisialisasi serial port untuk robot
             InitializeSerialPort();
+
         }
 
         // ======================
@@ -135,13 +297,13 @@ namespace Trajectory
                     string initMessage2 = "#0 P1525 S100\r\n"; //Inisialisasi Servo 0
                     string initMessage3 = "#2 P1502 S100\r\n"; //Inisialisasi Servo 2
                     string originServo3 = "#3 P1560 S500\r\n";  // Servo 3 origin
-                    string originClaw = "#4 P2200 S500\r\n";   // Claw origin (opsional)
+
 
                     serialPort.Write(initMessage);
                     serialPort.Write(initMessage2);
                     serialPort.Write(initMessage3);
                     serialPort.Write(originServo3);
-                    serialPort.Write(originClaw);
+
                 }
             }
             catch (Exception ex)
@@ -291,329 +453,13 @@ namespace Trajectory
             timeMs = int.Parse(txtTimeMs.Text);
         }
 
-        void ArmDraw(double sdt1, double sdt2, double sdt3)
-        {
-            // Jangan hapus seluruh canvas agar bayangan tidak hilang
-            plotCanvas.Children.Clear();
-            DrawGridAndAxes();
 
-            // Tambahkan kembali track path ke canvas (agar tetap ada)
-            if (!plotCanvas.Children.Contains(trackPath))
-                plotCanvas.Children.Add(trackPath);
 
-            // ==== Origin di bawah tengah ====
-            originX = plotCanvas.ActualWidth / 2;
-            originY = plotCanvas.ActualHeight - 10;
 
-            // ==== Skala otomatis supaya lengan pas ====
-            double totalLength = a1 + a2 + a3;
-            scale = (plotCanvas.ActualHeight - 20) / totalLength;
 
-            // ==== Ubah derajat ke radian ====
-            double r1 = sdt1 * Math.PI / 180.0;
-            double r2 = sdt2 * Math.PI / 180.0;
-            double r3 = sdt3 * Math.PI / 180.0;
+        
 
-            // ==== Hitung posisi tiap joint ====
-            double kx = a1 * Math.Cos(r1);
-            double ky = a1 * Math.Sin(r1);
-
-            double px = kx + a2 * Math.Cos(r1 + r2);
-            double py = ky + a2 * Math.Sin(r1 + r2);
-
-            double qx = px + a3 * Math.Cos(r1 + r2 + r3);
-            double qy = py + a3 * Math.Sin(r1 + r2 + r3);
-
-            // ==== Tambahkan titik lintasan end-effector ====
-            Point effectorPoint = new Point(ToCanvasX(qx), ToCanvasY(qy));
-            trackPath.Points.Add(effectorPoint);
-
-            // ==== Gambar setiap link ====
-            DrawLink(ToCanvasX(0), ToCanvasY(0), ToCanvasX(kx), ToCanvasY(ky), Brushes.Black);
-            DrawLink(ToCanvasX(kx), ToCanvasY(ky), ToCanvasX(px), ToCanvasY(py), Brushes.DarkBlue);
-            DrawLink(ToCanvasX(px), ToCanvasY(py), ToCanvasX(qx), ToCanvasY(qy), Brushes.Red);
-
-            // ==== Gambar titik end-effector (bulatan kecil) ====
-            Ellipse ee = new Ellipse
-            {
-                Width = 6,
-                Height = 6,
-                Fill = Brushes.Red
-            };
-            Canvas.SetLeft(ee, effectorPoint.X - 3);
-            Canvas.SetTop(ee, effectorPoint.Y - 3);
-            plotCanvas.Children.Add(ee);
-        }
-
-        void DrawLink(double x1, double y1, double x2, double y2, Brush color)
-        {
-            Line line = new Line
-            {
-                X1 = x1,
-                Y1 = y1,
-                X2 = x2,
-                Y2 = y2,
-                Stroke = color,
-                StrokeThickness = 2
-            };
-            plotCanvas.Children.Add(line);
-        }
-
-        private void PlotCanvas_Loaded(object sender, RoutedEventArgs e)
-        {
-            DrawGridAndAxes();
-        }
-
-        void DrawGridAndAxes()
-        {
-            plotCanvas.Children.Clear();
-
-            double width = plotCanvas.ActualWidth;
-            double height = plotCanvas.ActualHeight;
-
-            // ======================
-            // 1. SETUP SKALA DAN ORIGIN YANG KONSISTEN
-            // ======================
-
-            // Origin di bawah tengah (seperti lengan robot)
-            originX = width / 2;
-            originY = height - 10;
-
-            // Skala yang sama dengan perhitungan lengan
-            double totalLength = a1 + a2 + a3;
-            scale = (plotCanvas.ActualHeight - 20) / totalLength;
-
-            // Grid spacing dalam mm dunia nyata
-            double worldGridSpacing = 50; // 50mm
-            double canvasGridSpacing = worldGridSpacing * scale;
-
-            // Minor grid spacing
-            double minorWorldSpacing = 10; // 10mm
-            double minorCanvasSpacing = minorWorldSpacing * scale;
-
-            // ======================
-            // 2. GRID VERTIKAL (Garis X)
-            // ======================
-
-            // Grid ke kanan dari origin
-            for (double worldX = 0; worldX <= width; worldX += worldGridSpacing)
-            {
-                double canvasX = originX + worldX * scale;
-                if (canvasX > width) break;
-
-                // Garis grid utama
-                plotCanvas.Children.Add(new Line
-                {
-                    X1 = canvasX,
-                    Y1 = 0,
-                    X2 = canvasX,
-                    Y2 = originY,
-                    Stroke = Brushes.LightGray,
-                    StrokeThickness = 0.4
-                });
-
-                // Label sumbu X positif
-                TextBlock label = new TextBlock
-                {
-                    Text = worldX.ToString("0"),
-                    FontSize = 10,
-                    Foreground = Brushes.Gray,
-                    Background = Brushes.White
-                };
-                Canvas.SetLeft(label, canvasX - 8);
-                Canvas.SetTop(label, originY + 2);
-                plotCanvas.Children.Add(label);
-
-                // Grid minor
-                for (double minorX = worldX + minorWorldSpacing;
-                     minorX < worldX + worldGridSpacing && (originX + minorX * scale) < width;
-                     minorX += minorWorldSpacing)
-                {
-                    double minorCanvasX = originX + minorX * scale;
-                    plotCanvas.Children.Add(new Line
-                    {
-                        X1 = minorCanvasX,
-                        Y1 = 0,
-                        X2 = minorCanvasX,
-                        Y2 = originY,
-                        Stroke = Brushes.LightGray,
-                        StrokeThickness = 0.2,
-                        StrokeDashArray = new DoubleCollection() { 2, 3 }
-                    });
-                }
-            }
-
-            // Grid ke kiri dari origin
-            for (double worldX = 0; worldX >= -width; worldX -= worldGridSpacing)
-            {
-                double canvasX = originX + worldX * scale;
-                if (canvasX < 0) break;
-
-                if (worldX != 0) // Hindari garis di origin (sumbu Y)
-                {
-                    plotCanvas.Children.Add(new Line
-                    {
-                        X1 = canvasX,
-                        Y1 = 0,
-                        X2 = canvasX,
-                        Y2 = originY,
-                        Stroke = Brushes.LightGray,
-                        StrokeThickness = 0.4
-                    });
-
-                    // Label sumbu X negatif
-                    TextBlock label = new TextBlock
-                    {
-                        Text = worldX.ToString("0"),
-                        FontSize = 10,
-                        Foreground = Brushes.Gray,
-                        Background = Brushes.White
-                    };
-                    Canvas.SetLeft(label, canvasX - 12);
-                    Canvas.SetTop(label, originY + 2);
-                    plotCanvas.Children.Add(label);
-                }
-
-                // Grid minor
-                for (double minorX = worldX - minorWorldSpacing;
-                     minorX > worldX - worldGridSpacing && (originX + minorX * scale) > 0;
-                     minorX -= minorWorldSpacing)
-                {
-                    double minorCanvasX = originX + minorX * scale;
-                    plotCanvas.Children.Add(new Line
-                    {
-                        X1 = minorCanvasX,
-                        Y1 = 0,
-                        X2 = minorCanvasX,
-                        Y2 = originY,
-                        Stroke = Brushes.LightGray,
-                        StrokeThickness = 0.2,
-                        StrokeDashArray = new DoubleCollection() { 2, 3 }
-                    });
-                }
-            }
-
-            // ======================
-            // 3. GRID HORIZONTAL (Garis Y)
-            // ======================
-
-            // Grid ke atas dari origin
-            for (double worldY = 0; worldY <= totalLength; worldY += worldGridSpacing)
-            {
-                double canvasY = originY - worldY * scale;
-                if (canvasY < 0) break;
-
-                if (worldY != 0) // Hindari garis di origin (sumbu X)
-                {
-                    plotCanvas.Children.Add(new Line
-                    {
-                        X1 = 0,
-                        Y1 = canvasY,
-                        X2 = width,
-                        Y2 = canvasY,
-                        Stroke = Brushes.LightGray,
-                        StrokeThickness = 0.4
-                    });
-
-                    // Label sumbu Y positif
-                    TextBlock label = new TextBlock
-                    {
-                        Text = worldY.ToString("0"),
-                        FontSize = 10,
-                        Foreground = Brushes.Gray,
-                        Background = Brushes.White
-                    };
-                    Canvas.SetLeft(label, originX + 4);
-                    Canvas.SetTop(label, canvasY - 8);
-                    plotCanvas.Children.Add(label);
-                }
-
-                // Grid minor
-                for (double minorY = worldY + minorWorldSpacing;
-                     minorY < worldY + worldGridSpacing && (originY - minorY * scale) > 0;
-                     minorY += minorWorldSpacing)
-                {
-                    double minorCanvasY = originY - minorY * scale;
-                    plotCanvas.Children.Add(new Line
-                    {
-                        X1 = 0,
-                        Y1 = minorCanvasY,
-                        X2 = width,
-                        Y2 = minorCanvasY,
-                        Stroke = Brushes.LightGray,
-                        StrokeThickness = 0.2,
-                        StrokeDashArray = new DoubleCollection() { 2, 3 }
-                    });
-                }
-            }
-
-            // ======================
-            // 4. SUMBU KOORDINAT UTAMA
-            // ======================
-
-            // Sumbu X (garis horizontal di y=0)
-            plotCanvas.Children.Add(new Line
-            {
-                X1 = 0,
-                Y1 = originY,
-                X2 = width,
-                Y2 = originY,
-                Stroke = Brushes.Gray,
-                StrokeThickness = 1.5
-            });
-
-            // Sumbu Y (garis vertikal di x=0)
-            plotCanvas.Children.Add(new Line
-            {
-                X1 = originX,
-                Y1 = 0,
-                X2 = originX,
-                Y2 = originY,
-                Stroke = Brushes.Gray,
-                StrokeThickness = 1.5
-            });
-
-            // ======================
-            // 5. LABEL SUMBU UTAMA
-            // ======================
-
-            TextBlock labelX = new TextBlock
-            {
-                Text = "X (mm)",
-                FontSize = 12,
-                FontWeight = FontWeights.Bold,
-                Foreground = Brushes.Black,
-                Background = Brushes.White
-            };
-            Canvas.SetLeft(labelX, width - 50);
-            Canvas.SetTop(labelX, originY - 25);
-            plotCanvas.Children.Add(labelX);
-
-            TextBlock labelY = new TextBlock
-            {
-                Text = "Y (mm)",
-                FontSize = 12,
-                FontWeight = FontWeights.Bold,
-                Foreground = Brushes.Black,
-                Background = Brushes.White
-            };
-            Canvas.SetLeft(labelY, originX + 10);
-            Canvas.SetTop(labelY, 5);
-            plotCanvas.Children.Add(labelY);
-
-            // Label Origin
-            TextBlock labelOrigin = new TextBlock
-            {
-                Text = "(0,0)",
-                FontSize = 10,
-                Foreground = Brushes.DarkBlue,
-                FontWeight = FontWeights.Bold,
-                Background = Brushes.White
-            };
-            Canvas.SetLeft(labelOrigin, originX + 5);
-            Canvas.SetTop(labelOrigin, originY - 18);
-            plotCanvas.Children.Add(labelOrigin);
-        }
+           
 
         // ======================
         // 5. Fungsi Inverse Kinematic (Dimodifikasi)
@@ -653,7 +499,8 @@ namespace Trajectory
             else if (teta3 > 180) teta3 = 180;
 
             // gambar lengan
-            ArmDraw(teta1, teta2, teta3);
+            UpdateRobotChart(teta1, teta2, teta3);
+
 
             // Kirim ke robot jika terkoneksi
             if (isRobotConnected)
@@ -771,7 +618,7 @@ namespace Trajectory
         {
             if (space == 0 && theta1 != null && currentStep < theta1.Length)
             {
-                ArmDraw(theta1[currentStep], theta2[currentStep], theta3[currentStep]);
+                UpdateRobotChart(theta1[currentStep], theta2[currentStep], theta3[currentStep]);
 
                 // Kirim ke robot
                 if (isRobotConnected)
@@ -803,9 +650,9 @@ namespace Trajectory
 
         private void BtnClearPath_Click(object sender, RoutedEventArgs e)
         {
-            plotCanvas.Children.Clear();
-            trackPath.Points.Clear();
-            DrawGridAndAxes();
+            trajectoryPoints.Clear();
+            robotChart.Update(true);
+            robotChart.Update(true, true);
         }
 
         private void RbTimePath_Click(object sender, RoutedEventArgs e)
